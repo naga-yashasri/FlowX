@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FlowX — Smart Hospital Patient Flow System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F8F7; --panel:#FFFFFF; --line:#DCE6E2;
+  --ink:#173C35; --ink-soft:#4C6862;
+  --teal:#0F6B5C; --teal-deep:#0A4B40;
+  --amber:#C77D1F; --amber-bg:#FCEFDA;
+  --danger:#B14634; --danger-bg:#FBE9E5;
+  --ok:#2E7D5B; --ok-bg:#E4F3EA;
+  --radius:10px;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:15px;}
+h1,h2,h3{font-family:'Lora',serif;font-weight:600;margin:0;}
+button{font-family:inherit;cursor:pointer;}
+.app{display:flex;min-height:100%;}
+.rail{width:64px;background:var(--teal-deep);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:6px;flex-shrink:0;}
+.rail-logo{color:#fff;font-family:'Lora',serif;font-size:20px;margin-bottom:18px;}
+.rail button{width:44px;height:44px;border:none;background:transparent;color:#BFE3D8;border-radius:8px;font-size:19px;display:flex;align-items:center;justify-content:center;}
+.rail button.active{background:var(--teal);color:#fff;}
+.side{width:220px;background:var(--panel);border-right:1px solid var(--line);padding:22px 14px;flex-shrink:0;}
+.side .role-title{font-size:11px;letter-spacing:.03em;color:var(--ink-soft);margin-bottom:14px;padding:0 8px;}
+.side nav{display:flex;flex-direction:column;gap:2px;}
+.side nav button{text-align:left;padding:9px 10px;border:none;background:none;border-radius:8px;color:var(--ink);font-size:14px;font-weight:500;}
+.side nav button.active{background:var(--ok-bg);color:var(--teal-deep);}
+.side nav button:hover:not(.active){background:#F0F3F2;}
+.main{flex:1;padding:26px 32px;overflow-x:auto;min-width:0;}
+.topline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+.topline h1{font-size:23px;}
+.topline .sub{color:var(--ink-soft);font-size:13px;}
+.grid{display:grid;gap:16px;}
+.g6{grid-template-columns:repeat(6,1fr);}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:1.3fr 1fr;}
+@media (max-width:1000px){.g6{grid-template-columns:repeat(3,1fr);}}
+@media (max-width:900px){.g4{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:1fr;}.g2{grid-template-columns:1fr;}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+.stat .num{font-family:'Lora',serif;font-size:26px;color:var(--teal-deep);}
+.stat .label{color:var(--ink-soft);font-size:12px;margin-top:2px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;}
+.badge.wait{background:var(--amber-bg);color:var(--amber);}
+.badge.ok{background:var(--ok-bg);color:var(--ok);}
+.badge.no{background:var(--danger-bg);color:var(--danger);}
+.badge.info{background:#E7EEFB;color:#2E5AA8;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line);}
+td{padding:9px 10px;border-bottom:1px solid #EEF2F0;}
+tr:last-child td{border-bottom:none;}
+.btn{background:var(--teal);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:13.5px;font-weight:600;}
+.btn:hover{background:var(--teal-deep);}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink);}
+.btn.small{padding:5px 11px;font-size:12.5px;border-radius:6px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.progress{height:8px;background:#EAF1EE;border-radius:99px;overflow:hidden;}
+.progress > div{height:100%;background:var(--teal);}
+.token-big{font-family:'Lora',serif;font-size:40px;color:var(--teal-deep);}
+.step-row{display:flex;align-items:center;gap:10px;padding:8px 0;}
+.checklist button{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--line);background:#fff;font-size:13px;color:#fff;}
+.checklist button.done{background:var(--ok);border-color:var(--ok);}
+.checklist button.pending{background:var(--danger-bg);border-color:var(--danger);color:var(--danger);}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.flow .stage{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-size:13px;min-width:96px;text-align:center;}
+.flow .stage .n{font-family:'Lora',serif;font-size:19px;color:var(--teal-deep);}
+.flow .stage.active{border-color:var(--teal);}
+.arrow{color:var(--ink-soft);}
+.doc-card{border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;background:#fff;}
+.doc-card .name{font-weight:600;}
+.doc-card .spec{color:var(--ink-soft);font-size:12.5px;}
+.slot{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);padding:10px 14px;border-radius:8px;font-size:13.5px;margin:6px 0;cursor:pointer;}
+.slot.rec{border-color:var(--teal);background:#F1FAF6;}
+.slot .t{font-weight:600;}
+.slot .w{color:var(--ink-soft);font-size:12.5px;}
+.star{color:var(--amber);font-weight:700;}
+.section-gap{margin-top:20px;}
+.muted{color:var(--ink-soft);font-size:13px;}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
+.login-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:34px 36px;width:340px;}
+.login-card h1{font-size:22px;margin-bottom:4px;}
+.login-card input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin:7px 0;font-size:14px;}
+.login-card .btn{width:100%;margin-top:8px;padding:11px;}
+.demo-note{background:#F0F3F2;border:1px dashed var(--line);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--ink-soft);margin-top:14px;}
+.tab-switch{display:flex;gap:6px;margin-bottom:16px;background:#EEF2F0;padding:4px;border-radius:9px;}
+.tab-switch button{flex:1;border:none;background:none;padding:8px;border-radius:7px;font-size:13px;font-weight:600;color:var(--ink-soft);}
+.tab-switch button.active{background:#fff;color:var(--teal-deep);}
+.alert{border-radius:var(--radius);padding:14px 16px;border:1px solid #F1D3AE;background:var(--amber-bg);}
+.alert.ok{background:var(--ok-bg);border-color:#BFE0CD;}
+.bars{display:flex;align-items:flex-end;gap:10px;height:90px;margin:12px 0 4px;}
+.bars .bar{flex:1;background:#DCEEE6;border-radius:5px 5px 0 0;position:relative;display:flex;align-items:flex-end;justify-content:center;}
+.bars .bar > div{width:100%;background:var(--teal);border-radius:5px 5px 0 0;}
+.bars .lbl{display:flex;gap:10px;font-size:11px;color:var(--ink-soft);margin-top:2px;}
+.bars .lbl > div{flex:1;text-align:center;}
+.reason{font-size:13px;line-height:1.7;color:var(--ink-soft);}
+.why{list-style:none;padding:0;margin:6px 0 0;}
+.why li{padding-left:14px;position:relative;font-size:13px;color:var(--ink-soft);margin-bottom:3px;}
+.why li:before{content:"•";position:absolute;left:0;color:var(--teal);}
+.rail .spacer{flex:1;}
+.rail button.exit{color:#F4B8AC;}
+.rail button.exit:hover{background:#7A2E22;color:#fff;}
+.side{display:flex;flex-direction:column;}
+.side-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);}
+.side-foot .who{font-size:13px;font-weight:600;padding:0 8px;}
+.side-foot .who small{display:block;font-weight:400;color:var(--ink-soft);}
+.btn.exit{width:100%;margin-top:10px;background:none;border:1px solid var(--danger);color:var(--danger);}
+.btn.exit:hover{background:var(--danger-bg);}
+.modal-bg{position:fixed;inset:0;background:rgba(23,60,53,.45);display:none;align-items:center;justify-content:center;z-index:50;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:14px;padding:24px 26px;width:min(360px,90vw);}
+.err{color:var(--danger);font-size:12.5px;min-height:18px;}
+button:focus-visible,input:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+@media (max-width:700px){
+  .app{flex-direction:column;}
+  .rail{width:100%;flex-direction:row;padding:8px 12px;}
+  .rail-logo{margin:0 10px 0 0;}
+  .side{width:100%;border-right:none;border-bottom:1px solid var(--line);padding:10px;}
+  .side .role-title,.side-foot{display:none;}
+  .side nav{flex-direction:row;overflow-x:auto;}
+  .side nav button{white-space:nowrap;}
+  .main{padding:18px 14px;}
+}
+</style>
+</head>
+<body>
+
+<div id="login" class="login-wrap">
+  <div class="login-card">
+    <h1>FlowX</h1>
+    <p class="muted" style="margin-bottom:16px;">Sign in to continue</p>
+    <div class="tab-switch" id="roleTabs">
+      <button class="active" data-role="patient">Patient</button>
+      <button data-role="staff">Staff</button>
+      <button data-role="admin">Admin</button>
+    </div>
+    <input id="loginId" aria-label="Email or phone" placeholder="Email or phone" value="rahul@example.com" onkeydown="if(event.key==='Enter')enter()">
+    <input id="loginPw" aria-label="Password" placeholder="Password" type="password" value="demo1234" onkeydown="if(event.key==='Enter')enter()">
+    <div class="err" id="loginErr" role="alert"></div>
+    <button class="btn" onclick="enter()">Log in</button>
+    <div class="demo-note">Demo / prototype environment — all patients, doctors and hospital data shown are simulated. No real patient information is used.</div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none;">
+  <div class="rail" id="rail"></div>
+  <div class="side" id="side"></div>
+  <div class="main" id="main"></div>
+</div>
+
+<div class="modal-bg" id="exitModal" onclick="if(event.target===this)closeExit()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="exitTitle">
+    <h3 id="exitTitle">Log out of FlowX?</h3>
+    <p class="muted" style="margin:8px 0 16px;">You'll return to the sign-in screen. Demo data (queue, bookings, discharge) is kept until you reset it.</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn ghost" onclick="closeExit()">Stay</button>
+      <button class="btn ghost" onclick="logout(true)">Log out &amp; reset demo</button>
+      <button class="btn" onclick="logout()">Log out</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ SHARED STATE — the single source of truth every screen reads from ============ */
+const state = {
+  doctorsOnDuty: 8,
+  avgConsultTime: 8,        // minutes, hospital-wide default
+  arrivalRate10: 3,         // patients arriving per 10 min
+  bookingsToday: 24,
+  bedsTotal: 100, bedsOccupied: 82, bedsCleaning: 3,
+  currentToken: 'A18',      // last token called
+  // one shared queue: every token, patient or demo-seeded, lives here in arrival order
+  queue: (() => {
+    const q = [];
+    for (let i = 19; i <= 36; i++) q.push({token:'A'+i, name:'Demo patient '+(i-18), doctor:'Dr. Sharma', dept:'Cardiology', status:'waiting'});
+    return q;
+  })(),
+  consultationExtra: 9, // consultation-stage patients not individually modelled (demo padding to match hero KPI)
+  discharge: {
+    id:'P102', name:'Anita Rao', bed:'Bed 104',
+    stages:{doctor:true, pharmacy:true, billing:false, report:true}
+  },
+  bedsReleasing: [ {id:'Bed 104', releaseIn:25, held:true}, {id:'Bed 108', releaseIn:42}, {id:'Bed 112', releaseIn:55} ],
+  waitTrend: [ ['8 AM',18], ['9 AM',21], ['10 AM',26], ['11 AM',30], ['12 PM',24] ],
+  myBooking: null,
+  bookStep: 0, chosenSpec: null, chosenDoc: null, chosenSlot: null
+};
+const doctors = {
+  Cardiology:  {list:[['Dr. Sharma','12 yrs exp'],['Dr. Rao','8 yrs exp']], onDuty:2, consult:8},
+  Dermatology: {list:[['Dr. Iyer','6 yrs exp']], onDuty:1, consult:6},
+  Orthopedics: {list:[['Dr. Nair','15 yrs exp'],['Dr. Kapoor','9 yrs exp']], onDuty:2, consult:10}
+};
+const slotLoad = [8,6,5,3,7]; // simulated "patients predicted ahead" if that slot is chosen
+const slotTimes = ['9:00 AM','9:30 AM','10:30 AM','11:15 AM','2:00 PM'];
+
+/* ---- derived / computed helpers (transparent, queueing-style math, no black-box claims) ---- */
+function waitingCount(){ return state.queue.filter(q=>q.status==='waiting').length; }
+function consultCount(){ return state.queue.filter(q=>q.status==='consultation').length + state.consultationExtra; }
+function dischargeStageCount(){ return Object.values(state.discharge.stages).filter(Boolean).length; }
+function dischargeCompletionPct(){ return Math.round(dischargeStageCount()/4*100); }
+function isDischargeDone(){ return dischargeStageCount()===4; }
+function billingIsBottleneck(){ return !state.discharge.stages.billing; }
+function predictedWait(aheadCount, docs, consult){ return Math.max(0, Math.ceil((aheadCount/docs) * consult)); }
+function hospitalPredictedWait(){ return predictedWait(waitingCount(), state.doctorsOnDuty, state.avgConsultTime); }
+function bedsAvailable(){ return state.bedsTotal - state.bedsOccupied - state.bedsCleaning; }
+function forecastAt(mins){ return bedsAvailable() + state.bedsReleasing.filter(b=>b.releaseIn<=mins).length; }
+function myAhead(){
+  if(!state.myBooking) return null;
+  const idx = state.queue.findIndex(q=>q.token===state.myBooking.token);
+  if(idx===-1) return {ahead:0, status:'completed'};
+  const ahead = state.queue.slice(0,idx).filter(q=>q.status==='waiting').length;
+  return {ahead, status: state.queue[idx].status};
+}
+
+/* ============ actions ============ */
+function bookSlot(spec, docName, slot, slotIdx){
+  const d = doctors[spec];
+  const wait = predictedWait(slotLoad[slotIdx], d.onDuty, d.consult);
+  const num = 37 + state.bookingsToday - 24;
+  const token = 'A'+num;
+  state.queue.push({token, name:'Rahul Verma (you)', doctor:docName, dept:spec, status:'waiting'});
+  state.bookingsToday++;
+  state.myBooking = {token, doctor:docName, dept:spec, time:slot, predictedWait:wait};
+  state.bookStep = 4;
+  rerender();
+}
+function hasActiveBooking(){ const a = myAhead(); return !!a && (a.status==='waiting' || a.status==='consultation'); }
+function cancelMyBooking(){
+  if(!state.myBooking) return;
+  const t = state.queue.find(q=>q.token===state.myBooking.token);
+  if(t) t.status = 'cancelled';
+  state.myBooking = null; state.bookStep = 0;
+  rerender();
+}
+function callNext(){
+  const next = state.queue.find(q=>q.status==='waiting');
+  if(!next) return;
+  next.status = 'consultation';
+  state.currentToken = next.token;
+  rerender();
+}
+function completeToken(token){
+  const t = state.queue.find(q=>q.token===token);
+  if(t) t.status='completed';
+  rerender();
+}
+function cancelToken(token){
+  const t = state.queue.find(q=>q.token===token);
+  if(t) t.status='cancelled';
+  rerender();
+}
+function toggleStage(k){
+  state.discharge.stages[k] = !state.discharge.stages[k];
+  if(isDischargeDone()){
+    const bed = state.bedsReleasing.find(b=>b.id===state.discharge.bed);
+    if(bed){ bed.releaseIn = 0; bed.released = true; }
+  } else {
+    const bed = state.bedsReleasing.find(b=>b.id===state.discharge.bed);
+    if(bed){ bed.released=false; bed.releaseIn = 25; }
+  }
+  rerender();
+}
+function tickReleasedBed(){
+  const bed = state.bedsReleasing.find(b=>b.released);
+  if(bed){
+    state.bedsOccupied--;
+    state.bedsReleasing = state.bedsReleasing.filter(b=>b!==bed);
+    rerender();
+  }
+}
+
+/* ============ app shell / nav ============ */
+let role='patient', currentPage='home';
+const roleNames = {patient:'Patient', staff:'Hospital Staff', admin:'Admin'};
+const icons = {patient:'🧑',staff:'🩺',admin:'🛡'};
+const pages = {
+  patient:[['home','Home'],['book','Book Doctor'],['appts','My Appointments'],['queue','My Queue'],['profile','Profile']],
+  staff:[['main','Dashboard'],['opd','OPD Queue'],['discharge','Discharge'],['beds','Bed Management']],
+  admin:[['home','Overview'],['doctors','Doctors'],['staffm','Staff'],['depts','Departments'],['users','Users'],['bedsm','Beds']]
+};
+const loginIds = {patient:'rahul@example.com', staff:'staff@hosp.in', admin:'admin@hosp.in'};
+const userNames = {patient:'Rahul Verma', staff:'Meena Joshi', admin:'Administrator'};
+function setLoginRole(r){
+  role = r;
+  [...document.getElementById('roleTabs').children].forEach(b=>b.classList.toggle('active', b.dataset.role===r));
+  document.getElementById('loginId').value = loginIds[r];
+  document.getElementById('loginErr').textContent = '';
+}
+document.getElementById('roleTabs').addEventListener('click', e=>{
+  if(e.target.tagName==='BUTTON') setLoginRole(e.target.dataset.role);
+});
+function askExit(){ document.getElementById('exitModal').classList.add('open'); }
+function closeExit(){ document.getElementById('exitModal').classList.remove('open'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeExit(); });
+function logout(reset){
+  if(reset){ location.reload(); return; }
+  closeExit();
+  document.getElementById('app').style.display='none';
+  document.getElementById('login').style.display='flex';
+  setLoginRole('patient');
+}
+function enter(){
+  const id = document.getElementById('loginId').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  if(!id || !pw){ document.getElementById('loginErr').textContent = 'Enter your email or phone and password to continue.'; return; }
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='flex';
+  buildRail(); go(role, defaultPage(role));
+}
+function defaultPage(r){ return r==='patient'?'home': r==='staff'?'main':'home'; }
+function buildRail(){
+  const rail = document.getElementById('rail');
+  rail.innerHTML = '<div class="rail-logo">FX</div>';
+  Object.keys(roleNames).forEach(r=>{
+    const b = document.createElement('button');
+    b.textContent = icons[r]; b.title = 'Switch to '+roleNames[r]+' view (demo)'; b.setAttribute('aria-label', b.title);
+    b.className = r===role?'active':'';
+    b.onclick = ()=>{ role=r; buildRail(); go(role, defaultPage(role)); };
+    rail.appendChild(b);
+  });
+  const sp = document.createElement('div'); sp.className='spacer'; rail.appendChild(sp);
+  const ex = document.createElement('button');
+  ex.className='exit'; ex.textContent='⏻'; ex.title='Log out'; ex.setAttribute('aria-label','Log out'); ex.onclick=askExit;
+  rail.appendChild(ex);
+}
+function buildSide(active){
+  const side = document.getElementById('side');
+  side.innerHTML = `<div class="role-title">${roleNames[role].toUpperCase()} PANEL</div>`;
+  const nav = document.createElement('nav');
+  pages[role].forEach(([key,label])=>{
+    const b = document.createElement('button');
+    b.textContent = label; b.className = key===active?'active':'';
+    b.onclick = ()=>go(role,key);
+    nav.appendChild(b);
+  });
+  side.appendChild(nav);
+  const foot = document.createElement('div'); foot.className='side-foot';
+  foot.innerHTML = `<div class="who">${userNames[role]}<small>${roleNames[role]}</small></div><button class="btn exit" onclick="askExit()">Log out</button>`;
+  side.appendChild(foot);
+}
+function go(r,page){ role=r; currentPage=page; buildSide(page); document.getElementById('main').innerHTML = renderers[r][page](); }
+function rerender(){ go(role,currentPage); }
+
+const renderers = { patient:{}, staff:{}, admin:{} };
+
+/* ============ PATIENT ============ */
+renderers.patient.home = ()=>{
+  const b = state.myBooking;
+  const a = myAhead();
+  return `
+  <div class="topline"><h1>Welcome, Rahul</h1><span class="sub">Saturday, 26 September</span></div>
+  <div class="grid g2">
+    <div class="card">
+      <h3 style="margin-bottom:12px;">Upcoming appointment · live status</h3>
+      ${b ? `
+      <div style="font-weight:600;font-size:16px;">${b.doctor}</div>
+      <div class="muted">${b.dept} · ${b.time}</div>
+      <div style="margin-top:14px;display:flex;gap:20px;flex-wrap:wrap;">
+        <div><div class="muted">Token</div><div style="font-weight:700;font-size:18px;">${b.token}</div></div>
+        <div><div class="muted">Patients ahead</div><div style="font-weight:700;font-size:18px;">${a.status==='waiting'?a.ahead:0}</div></div>
+        <div><div class="muted">Estimated wait</div><div style="font-weight:700;font-size:18px;">${a.status==='waiting'?predictedWait(a.ahead,state.doctorsOnDuty,state.avgConsultTime):0} min</div></div>
+        <div><div class="muted">Status</div><div><span class="badge ${a.status==='waiting'?'wait':a.status==='consultation'?'info':'ok'}">${a.status[0].toUpperCase()+a.status.slice(1)}</span></div></div>
+      </div>` : `<p class="muted">No appointment booked yet.</p>`}
+      <button class="btn ghost small" style="margin-top:14px;" onclick="go('patient','queue')">View my queue</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:12px;">Quick actions</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn ghost" onclick="state.bookStep=0;go('patient','book')">Book a doctor</button>
+        <button class="btn ghost" onclick="go('patient','appts')">My appointments</button>
+        <button class="btn ghost" onclick="go('patient','profile')">Edit profile</button>
+      </div>
+    </div>
+  </div>`;
+};
+
+renderers.patient.book = ()=>{
+  if(hasActiveBooking() && state.bookStep!==4) return `<div class="topline"><h1>Book a doctor</h1></div>
+  <div class="card"><h3 style="margin-bottom:8px;">You already have an active appointment</h3>
+  <p class="muted">Token ${state.myBooking.token} with ${state.myBooking.doctor}. Cancel it first if you want a different doctor or slot.</p>
+  <button class="btn ghost" style="margin-top:12px;" onclick="go('patient','appts')">Go to My Appointments</button></div>`;
+  const specs = Object.keys(doctors);
+  let html = `<div class="topline"><h1>Book a doctor</h1></div>
+  <div class="flow">
+    <span class="stage ${state.bookStep>=0?'active':''}">Specialization</span><span class="arrow">→</span>
+    <span class="stage ${state.bookStep>=1?'active':''}">Doctor</span><span class="arrow">→</span>
+    <span class="stage ${state.bookStep>=2?'active':''}">Slot</span><span class="arrow">→</span>
+    <span class="stage ${state.bookStep>=3?'active':''}">Confirm</span>
+  </div><div class="card">`;
+  if(state.bookStep===0){
+    html += `<h3 style="margin-bottom:10px;">Choose a specialization</h3><div style="display:flex;gap:10px;flex-wrap:wrap;">`;
+    specs.forEach(s=> html += `<button class="btn ghost" onclick="state.chosenSpec='${s}';state.bookStep=1;rerender()">${s}</button>`);
+    html += `</div>`;
+  } else if(state.bookStep===1){
+    html += `<h3 style="margin-bottom:10px;">${state.chosenSpec} — available doctors</h3>`;
+    doctors[state.chosenSpec].list.forEach(([n,e])=>{
+      html += `<div class="doc-card"><div><div class="name">${n}</div><div class="spec">${e}</div></div><button class="btn small" onclick="state.chosenDoc='${n}';state.bookStep=2;rerender()">Select</button></div>`;
+    });
+  } else if(state.bookStep===2){
+    const d = doctors[state.chosenSpec];
+    const waits = slotLoad.map(l=>predictedWait(l, d.onDuty, d.consult));
+    const best = waits.indexOf(Math.min(...waits));
+    html += `<h3 style="margin-bottom:4px;">${state.chosenDoc} — available slots</h3>
+    <p class="muted" style="margin-bottom:10px;">Recommended based on predicted OPD load for each slot</p>`;
+    slotTimes.forEach((t,i)=>{
+      html += `<div class="slot ${i===best?'rec':''}" onclick="bookSlot('${state.chosenSpec}','${state.chosenDoc}','${t}',${i})">
+        <span class="t">${t}${i===best?' <span class="star">⭐ Recommended</span>':''}</span>
+        <span class="w">Expected wait: ${waits[i]} min</span></div>`;
+    });
+  } else if(state.bookStep===4){
+    const b = state.myBooking;
+    html += `<h3 style="margin-bottom:8px;">✓ Appointment confirmed</h3>
+    <table>
+      <tr><td class="muted">Doctor</td><td style="text-align:right;font-weight:600;">${b.doctor}</td></tr>
+      <tr><td class="muted">Department</td><td style="text-align:right;">${b.dept}</td></tr>
+      <tr><td class="muted">Time</td><td style="text-align:right;">${b.time}</td></tr>
+      <tr><td class="muted">Token</td><td style="text-align:right;font-weight:700;">${b.token}</td></tr>
+      <tr><td class="muted">Expected waiting time</td><td style="text-align:right;">${b.predictedWait} min</td></tr>
+    </table>
+    <button class="btn" style="margin-top:12px;" onclick="go('patient','queue')">View my queue</button>
+    <button class="btn ghost" style="margin-top:12px;margin-left:8px;" onclick="go('patient','appts')">My appointments</button>`;
+  }
+  html += `</div>`;
+  return html;
+};
+
+renderers.patient.appts = ()=>{
+  const b = state.myBooking, a = myAhead(), st = a ? a.status : '';
+  const lab = {waiting:'Booked', consultation:'In consultation', completed:'Completed', cancelled:'Cancelled'}[st] || 'Booked';
+  const cls = {waiting:'wait', consultation:'info', completed:'ok', cancelled:'no'}[st] || 'wait';
+  return `<div class="topline"><h1>My appointments</h1></div>
+  <div class="card"><table>
+    <tr><th>Doctor</th><th>Department</th><th>Time</th><th>Status</th></tr>
+    ${b?`<tr><td>${b.doctor}</td><td>${b.dept}</td><td>${b.time} · ${b.token}</td><td><span class="badge ${cls}">${lab}</span> ${st==='waiting'?'<button class="btn ghost small" style="margin-left:8px;" onclick="cancelMyBooking()">Cancel</button>':''}</td></tr>`:''}
+    <tr><td>Dr. Iyer</td><td>Dermatology</td><td>12 Sep</td><td><span class="badge ok">Completed</span></td></tr>
+    <tr><td>Dr. Nair</td><td>Orthopedics</td><td>2 Sep</td><td><span class="badge no">Cancelled</span></td></tr>
+  </table></div>`;
+};
+
+renderers.patient.queue = ()=>{
+  const a = myAhead();
+  if(!a) return `<div class="topline"><h1>My queue</h1></div><div class="card muted">You don't have an active token yet. Book a doctor to join the queue.</div>`;
+  const wait = a.status==='waiting'? predictedWait(a.ahead,state.doctorsOnDuty,state.avgConsultTime) : 0;
+  const pct = a.status==='completed'?100:a.status==='consultation'?80:Math.max(8,100-a.ahead*8);
+  return `<div class="topline"><h1>My queue</h1></div>
+  <div class="card" style="max-width:360px;">
+    <div class="token-big">${state.myBooking.token}</div>
+    <table style="margin-top:10px;">
+      <tr><td class="muted">Current token (last called)</td><td style="text-align:right;font-weight:600;">${state.currentToken}</td></tr>
+      <tr><td class="muted">Patients ahead</td><td style="text-align:right;font-weight:600;">${a.status==='waiting'?a.ahead:0}</td></tr>
+      <tr><td class="muted">Estimated wait</td><td style="text-align:right;font-weight:600;">${wait} min</td></tr>
+      <tr><td class="muted">Status</td><td style="text-align:right;"><span class="badge ${a.status==='waiting'?'wait':a.status==='consultation'?'info':'ok'}">${a.status[0].toUpperCase()+a.status.slice(1)}</span></td></tr>
+    </table>
+    <div class="progress" style="margin-top:14px;"><div style="width:${pct}%;"></div></div>
+    <p class="muted" style="margin-top:6px;">Updates live as hospital staff call patients from the OPD queue.</p>
+  </div>`;
+};
+
+renderers.patient.profile = ()=>`
+  <div class="topline"><h1>Profile</h1></div>
+  <div class="card" style="max-width:400px;">
+    <p><strong>Rahul Verma</strong></p>
+    <p class="muted">rahul@example.com · +91 98xxxxxx10</p>
+    <p class="muted">Patient ID: P045 (demo)</p>
+    <button class="btn ghost small" style="margin-top:10px;">Edit details</button>
+  </div>`;
+
+/* ============ STAFF — hero dashboard ============ */
+renderers.staff.main = ()=>{
+  const wq = waitingCount(), cq = consultCount(), pw = hospitalPredictedWait();
+  const trend = state.waitTrend.map(x=>x[1]); trend.push(pw);
+  const labels = state.waitTrend.map(x=>x[0]).concat(['Now']);
+  const maxT = Math.max(...trend);
+  const bottleneck = billingIsBottleneck();
+  return `
+  <div class="topline"><h1>Smart hospital flow dashboard</h1><span class="sub">Live, simulated data</span></div>
+  <div class="grid g6">
+    <div class="card stat"><div class="num">${state.bookingsToday}</div><div class="label">Patients today</div></div>
+    <div class="card stat"><div class="num">${wq}</div><div class="label">In queue</div></div>
+    <div class="card stat"><div class="num">${state.avgConsultTime}m</div><div class="label">Avg. consult time</div></div>
+    <div class="card stat"><div class="num">${state.doctorsOnDuty}</div><div class="label">Doctors on duty</div></div>
+    <div class="card stat"><div class="num">${bedsAvailable()}</div><div class="label">Beds available</div></div>
+    <div class="card stat"><div class="num">${state.bedsReleasing.length}</div><div class="label">Beds freeing soon</div></div>
+  </div>
+
+  <div class="section-gap"><h3 style="margin-bottom:10px;">Patient flow</h3>
+  <div class="flow">
+    <div class="stage active"><div class="n">${state.bookingsToday}</div>Booking</div><span class="arrow">→</span>
+    <div class="stage active"><div class="n">${wq}</div>OPD Queue</div><span class="arrow">→</span>
+    <div class="stage active"><div class="n">${cq}</div>Consultation</div><span class="arrow">→</span>
+    <div class="stage active"><div class="n">${isDischargeDone()?0:1}</div>Discharge</div><span class="arrow">→</span>
+    <div class="stage active"><div class="n">${state.bedsReleasing.length}</div>Bed release</div>
+  </div></div>
+
+  <div class="grid g2 section-gap">
+    <div class="card">
+      <h3 style="margin-bottom:6px;">Queue prediction</h3>
+      <table>
+        <tr><td class="muted">Current queue</td><td style="text-align:right;font-weight:600;">${wq}</td></tr>
+        <tr><td class="muted">Doctors available</td><td style="text-align:right;font-weight:600;">${state.doctorsOnDuty}</td></tr>
+        <tr><td class="muted">Average consultation time</td><td style="text-align:right;font-weight:600;">${state.avgConsultTime} min</td></tr>
+        <tr><td class="muted">Arrival rate</td><td style="text-align:right;font-weight:600;">${state.arrivalRate10} / 10 min</td></tr>
+      </table>
+      <p style="margin-top:10px;font-weight:600;">Predicted waiting time: <span style="color:var(--teal-deep);">${pw} min</span></p>
+      <p class="muted" style="font-size:12px;margin-top:2px;">Wait ≈ (patients ahead ÷ doctors on duty) × avg. consultation time — a simple queueing estimate, not a black-box model.</p>
+      <div class="reason" style="margin-top:8px;"><strong style="color:var(--ink);">Why is waiting time ${pw>25?'high':'moderate'}?</strong>
+      <ul class="why">
+        <li>${wq} patients currently waiting</li>
+        <li>${state.doctorsOnDuty} doctors available right now</li>
+        <li>Arrival rate of ${state.arrivalRate10} patients every 10 minutes</li>
+      </ul></div>
+    </div>
+    <div class="${bottleneck?'alert':'alert ok'}">
+      ${bottleneck ? `
+      <span class="badge wait">⚠ Bottleneck detected</span>
+      <div style="margin-top:8px;font-weight:600;">Billing desk</div>
+      <table style="margin-top:6px;">
+        <tr><td class="muted">Average processing time</td><td style="text-align:right;">18 min</td></tr>
+        <tr><td class="muted">Normal</td><td style="text-align:right;">10 min</td></tr>
+        <tr><td class="muted">Impact</td><td style="text-align:right;">Discharge delayed ~8 min</td></tr>
+      </table>` : `<span class="badge ok">✓ No bottleneck detected</span><div class="muted" style="margin-top:6px;">All discharge stages are moving at normal pace.</div>`}
+    </div>
+  </div>
+
+  <div class="grid g2 section-gap">
+    <div class="card">
+      <h3 style="margin-bottom:4px;">OPD waiting time trend</h3>
+      <div class="bars">${trend.map(v=>`<div class="bar" style="height:100%;"><div style="height:${v/maxT*100}%;"></div></div>`).join('')}</div>
+      <div class="lbl">${labels.map(l=>`<div>${l}</div>`).join('')}</div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:4px;">Bed availability forecast</h3>
+      <div class="bars">${[0,30,60,90].map(m=>`<div class="bar" style="height:100%;"><div style="height:${forecastAt(m)/(state.bedsTotal-state.bedsOccupied-state.bedsCleaning+10)*100}%;"></div></div>`).join('')}</div>
+      <div class="lbl"><div>Now: ${forecastAt(0)}</div><div>+30: ${forecastAt(30)}</div><div>+60: ${forecastAt(60)}</div><div>+90: ${forecastAt(90)}</div></div>
+    </div>
+  </div>`;
+};
+
+renderers.staff.opd = ()=>{
+  const rows = state.queue.map(o=>`
+    <tr><td style="font-weight:600;">${o.token}</td><td class="muted">${o.name}</td><td>${o.doctor}</td>
+    <td><span class="badge ${o.status==='waiting'?'wait':o.status==='consultation'?'info':o.status==='completed'?'ok':'no'}">${o.status[0].toUpperCase()+o.status.slice(1)}</span></td>
+    <td>
+      ${o.status==='consultation'?`<button class="btn ghost small" onclick="completeToken('${o.token}')">Complete</button>`:''}
+      ${(o.status==='waiting'||o.status==='consultation')?`<button class="btn ghost small" onclick="cancelToken('${o.token}')">Cancel</button>`:''}
+    </td></tr>`).join('');
+  return `<div class="topline"><h1>OPD queue management</h1></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div><div class="muted">Current token</div><div class="token-big">${state.currentToken}</div></div>
+      <div><div class="muted">Patients waiting</div><div style="font-weight:700;font-size:20px;">${waitingCount()}</div></div>
+      <button class="btn" onclick="callNext()" ${waitingCount()===0?'disabled':''}>Call next patient</button>
+    </div>
+  </div>
+  <div class="card section-gap"><table><tr><th>Token</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Update</th></tr>${rows}</table></div>`;
+};
+
+renderers.staff.discharge = ()=>{
+  const labels = {doctor:'Doctor approval',pharmacy:'Pharmacy',billing:'Billing',report:'Final report'};
+  const done = dischargeStageCount();
+  const bed = state.bedsReleasing.find(b=>b.id===state.discharge.bed);
+  const rows = Object.keys(labels).map(k=>`
+    <div class="step-row"><button class="${state.discharge.stages[k]?'done':'pending'}" onclick="toggleStage('${k}')">${state.discharge.stages[k]?'✓':'✗'}</button><span>${labels[k]}${k==='billing'&&billingIsBottleneck()?' — <span style="color:var(--danger);">bottleneck</span>':''}</span></div>`).join('');
+  return `<div class="topline"><h1>Discharge management</h1></div>
+  <div class="grid g2">
+    <div class="card">
+      <div class="muted">Patient ${state.discharge.id} · ${state.discharge.name} · assigned ${state.discharge.bed}</div>
+      <div class="checklist" style="margin-top:10px;">${rows}</div>
+    </div>
+    <div class="card">
+      <div class="muted">Progress</div>
+      <div class="num" style="font-size:22px;">${done}/4</div>
+      <div class="progress" style="margin:10px 0;"><div style="width:${dischargeCompletionPct()}%;"></div></div>
+      ${done===4 ? `<div class="badge ok">✓ Discharge complete</div><p class="muted" style="margin-top:8px;">${bed?`${state.discharge.bed} is now releasing.`:`${state.discharge.bed} has been released.`}</p>${bed?`<button class="btn small" style="margin-top:6px;" onclick="tickReleasedBed()">Confirm bed released</button>`:''}`
+      : `<div class="muted">Estimated discharge</div><div style="font-weight:600;">${(4-done)*12} min</div>`}
+    </div>
+  </div>`;
+};
+
+renderers.staff.beds = ()=>`
+  <div class="topline"><h1>Bed management</h1></div>
+  <div class="grid g4">
+    <div class="card stat"><div class="num">${state.bedsTotal}</div><div class="label">Total beds</div></div>
+    <div class="card stat"><div class="num">${state.bedsOccupied}</div><div class="label">Occupied</div></div>
+    <div class="card stat"><div class="num">${bedsAvailable()}</div><div class="label">Available</div></div>
+    <div class="card stat"><div class="num">${state.bedsCleaning}</div><div class="label">Under cleaning</div></div>
+  </div>
+  <div class="card section-gap">
+    <h3 style="margin-bottom:6px;">Bed availability forecast</h3>
+    <table><tr><th>Now</th><th>+30 min</th><th>+60 min</th><th>+90 min</th></tr>
+    <tr><td>${forecastAt(0)}</td><td>${forecastAt(30)}</td><td>${forecastAt(60)}</td><td>${forecastAt(90)}</td></tr></table>
+  </div>
+  <div class="card section-gap">
+    <h3 style="margin-bottom:10px;">Predicted release (linked to discharge progress)</h3>
+    <table><tr><th>Bed</th><th>Estimated free in</th><th>Status</th></tr>
+    ${state.bedsReleasing.map(b=>`<tr><td>${b.id}</td><td>${b.released?'Ready now':b.releaseIn+' min'}</td><td>${b.id===state.discharge.bed?`<span class="badge ${billingIsBottleneck()?'wait':'ok'}">${billingIsBottleneck()?'Waiting on billing':'On track'}</span>`:'<span class="badge info">Scheduled</span>'}</td></tr>`).join('')}
+    </table>
+  </div>`;
+
+/* ============ ADMIN ============ */
+renderers.admin.home = ()=>`
+  <div class="topline"><h1>Admin overview</h1><span class="sub">Role: Administrator · full access</span></div>
+  <div class="grid g4">
+    <div class="card stat"><div class="num">35</div><div class="label">Doctors</div></div>
+    <div class="card stat"><div class="num">1,240</div><div class="label">Patients</div></div>
+    <div class="card stat"><div class="num">86</div><div class="label">Staff</div></div>
+    <div class="card stat"><div class="num">${state.bookingsToday}</div><div class="label">Appointments today</div></div>
+    <div class="card stat"><div class="num">${waitingCount()}</div><div class="label">Active queues</div></div>
+    <div class="card stat"><div class="num">${bedsAvailable()}</div><div class="label">Available beds</div></div>
+    <div class="card stat"><div class="num">${Math.round(state.bedsOccupied/state.bedsTotal*100)}%</div><div class="label">Hospital utilisation</div></div>
+  </div>`;
+function adminTable(title,cols,rows){
+  return `<div class="topline"><h1>${title}</h1></div>
+  <div class="card"><table><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr>
+  ${rows.map(r=>`<tr>${r.map(v=>`<td>${v}</td>`).join('')}<td><button class="btn ghost small">Manage</button></td></tr>`).join('')}
+  </table></div>`;
+}
+renderers.admin.doctors = ()=>adminTable('Doctors',['Name','Department','Status'],[
+  ['Dr. Sharma','Cardiology','<span class="badge ok">Active</span>'],
+  ['Dr. Iyer','Dermatology','<span class="badge ok">Active</span>'],
+  ['Dr. Nair','Orthopedics','<span class="badge wait">On leave</span>']]);
+renderers.admin.staffm = ()=>adminTable('Hospital staff',['Name','Role','Access level'],[
+  ['Meena Joshi','Front desk','<span class="badge info">Standard</span>'],
+  ['Arjun Das','OPD coordinator','<span class="badge info">Standard</span>'],
+  ['Priya Menon','Billing','<span class="badge wait">Restricted</span>']]);
+renderers.admin.depts = ()=>adminTable('Departments',['Department','Doctors','Avg. wait'],[
+  ['Cardiology','2','24 min'],['Dermatology','1','18 min'],['Orthopedics','2','22 min']]);
+renderers.admin.users = ()=>adminTable('Users & roles',['User','Role','Access'],[
+  ['rahul@example.com','Patient','<span class="badge info">Standard</span>'],
+  ['sharma.dr@hosp.in','Doctor','<span class="badge info">Standard</span>'],
+  ['admin@hosp.in','Admin','<span class="badge ok">Full access</span>']]);
+renderers.admin.bedsm = ()=>adminTable('Beds',['Ward','Total','Available'],[
+  ['General','60',String(bedsAvailable())],['ICU','20','2'],['Maternity','20','4']]);
+</script>
+</body>
+</html>
